@@ -1,0 +1,6 @@
+# dsh-tingchao — bundle patch layer
+#
+# 把「听潮」判断标准面板挂进 profile。id 同时是日志前缀。
+- insert:
+    - id: tingchao
+      name: 'dsh-tingchao'

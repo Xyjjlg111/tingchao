@@ -1,0 +1,17 @@
+{
+  "name": "dsh-tingchao",
+  "version": "0.1.0-dsh.1",
+  "private": true,
+  "description": "「听潮」判断标准面板：通用标准 + 每个 QQ 号一张专属卡片（关键词/门槛/开关），群里按人分别判定。",
+  "type": "module",
+  "main": "index.js",
+  "license": "MIT",
+  "engines": { "node": ">=20.18" },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web" },
+    "compatibility": { "dsh": ">=0.2.0-rc.2 <0.3.0", "node": ">=20.18", "profiles": ["desktop", "web"] }
+  },
+  "exports": { ".": "./index.js", "./client": "./client.js", "./package.json": "./package.json" },
+  "files": ["index.js", "client.js", "cordis.patch.yml", "README.md"]
+}

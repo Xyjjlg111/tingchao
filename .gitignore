@@ -1,0 +1,9 @@
+node_modules/
+models/
+data/
+logs/
+*.log
+observations.jsonl
+baselines.json
+standards.json
+.DS_Store

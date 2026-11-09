@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "default": {
+    "id": "default",
+    "kind": "default",
+    "name": "通用标准",
+    "label": "陌生人 / 没有专属标准的人",
+    "keywords": [
+      "正常人说话节奏",
+      "没有专属样本"
+    ],
+    "thresholds": {
+      "minMargin": 0.18,
+      "labelMargin": {
+        "angry": 0.2,
+        "neutral": 0,
+        "sad": 0.3
+      }
+    },
+    "enabled": true,
+    "updatedAt": 0
+  },
+  "people": {},
+  "groups": {}
+}

@@ -1,26 +1,10 @@
 {
-  "name": "tingchao-svc",
+  "name": "dsh-ears-svc",
+  "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "On-premise ASR + voice-affect service: local Chinese transcription and speaker-normalized affect hints for LLM agents.",
+  "description": "Local ASR / prosody / speaker-embedding service for qq-bridge (isolated from DSH profile)",
   "main": "server.mjs",
-  "license": "MIT",
-  "engines": {
-    "node": ">=20.18"
-  },
-  "scripts": {
-    "start": "node server.mjs",
-    "test": "node test-affect.mjs && node test-local.mjs",
-    "test:integration": "node test-integration.mjs"
-  },
-  "keywords": [
-    "asr",
-    "whisper",
-    "paraformer",
-    "speech-emotion",
-    "llm",
-    "voice"
-  ],
   "dependencies": {
     "@fugood/whisper.node": "1.1.3",
     "mpg123-decoder": "^1.0.3",

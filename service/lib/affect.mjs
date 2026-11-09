@@ -7,7 +7,7 @@
 //   1) 规则版（默认）：拿 features 与 baseline（这个人的中位数特征）做比值，
 //      相对变化才是信号；证据不够就返回 neutral（宁可不说话，也不乱贴标签）。
 //   2) 校准版（有标注样本后）：线性判别/最近质心，喂 20–40 条带标签样本即可，
-//      由 ./calibrate.mjs 生成 data/affect-model.json。
+//      由 .\calibrate.mjs 生成 data/affect-model.json。
 //
 // 输出只有「倾向 + 置信度」，永远不是事实；桥接只在 confidence ≥ 0.45 时才写「语气:」。
 // 0 token，不联网。

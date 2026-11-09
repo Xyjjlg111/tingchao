@@ -5,7 +5,7 @@
 //       extract/Audio/wav/<同路径>.wav        44.1kHz 双声道 16bit
 //
 // 用法:
-//   node ingest-emotiontalk.mjs --root "<corpus>/EmotionTalk\extract" --out data/emotiontalk-samples.jsonl
+//   node ingest-emotiontalk.mjs --root "<corpus>\EmotionTalk\extract" --out data/emotiontalk-samples.jsonl
 //   node ingest-emotiontalk.mjs --limit 200          # 先抽 200 条看方向
 //
 // 只写特征（不复制音频、不保留音频以外的个人信息）。
@@ -20,7 +20,7 @@ const arg = (name, dflt = '') => {
   const v = process.argv[i + 1]
   return v && !v.startsWith('--') ? v : 'true'
 }
-const ROOT = arg('root', '语音\\语音库\\EmotionTalk\\extract')
+const ROOT = arg('root', '<drive>/\语音\\语音库\\EmotionTalk\\extract')
 const OUT = arg('out', join('data', 'emotiontalk-samples.jsonl'))
 const LIMIT = Number(arg('limit', '0')) || 0
 

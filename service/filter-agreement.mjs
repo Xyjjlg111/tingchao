@@ -3,12 +3,12 @@
 // 目的：分清"我们的特征不行"和"标签本身噪声大"。
 // 只保留：5 位标注员映射到我们的类之后 ≥4 位一致，且该多数类 == 样本的 emotion_result。
 //
-// 用法: node filter-agreement.mjs --root "<corpus>/EmotionTalk\extract" --samples data/emotiontalk-samples.jsonl --out data/emotiontalk-clean.jsonl --min 0.8
+// 用法: node filter-agreement.mjs --root "<corpus>\EmotionTalk\extract" --samples data/emotiontalk-samples.jsonl --out data/emotiontalk-clean.jsonl --min 0.8
 import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 
 const arg = (n, d = '') => { const i = process.argv.indexOf(`--${n}`); return i < 0 ? d : process.argv[i + 1] }
-const ROOT = arg('root', '语音\\语音库\\EmotionTalk\\extract')
+const ROOT = arg('root', '<drive>/\语音\\语音库\\EmotionTalk\\extract')
 const SAMPLES = arg('samples', 'data/emotiontalk-samples.jsonl')
 const OUT = arg('out', 'data/emotiontalk-clean.jsonl')
 const MIN = Number(arg('min', '0.8'))

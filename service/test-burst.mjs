@@ -11,7 +11,7 @@ const arg = (n, d = '') => { const i = process.argv.indexOf(`--${n}`); return i 
 const N = Number(arg('n', '12'))
 const PORT = Number(arg('port', '3098'))
 const SMART_MIN = Number(arg('from', '100'))
-const DIR = arg('dir', '语音库\\EmoGator\\extract\\EmoGator-main\\data\\mp3')
+const DIR = arg('dir', '<drive>/\语音库\\EmoGator\\extract\\EmoGator-main\\data\\mp3')
 
 const CATS = [
   ['02', 'Amusement 笑', 'happy'],

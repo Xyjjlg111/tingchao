@@ -550,7 +550,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/eco') {
       let eco = false
       try {
-        const ecoFile = process.env.EARS_ECO_FILE || '/var/lib/tingchao/eco-state.json'
+        const ecoFile = process.env.EARS_ECO_FILE || 'F:/dsh-autostart/logs/eco-state.json'
         const st = JSON.parse(readFileSync(ecoFile, 'utf8'))
         eco = Boolean(st && st.eco)
       } catch {}

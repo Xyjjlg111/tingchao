@@ -4,7 +4,7 @@
 // 文件命名：NNNNNN-EE-I.mp3  （说话人 000001-000357 / 类别 01-30 / 第几次 1-3）
 //
 // 用法:
-//   node burst-ingest.mjs --root "<corpus>/EmoGator\extract\EmoGator-main\data\mp3" --limit 2000
+//   node burst-ingest.mjs --root "<drive>/语音库\EmoGator\extract\EmoGator-main\data\mp3" --limit 2000
 //   node burst-ingest.mjs --root "..." --out data\burst-samples.jsonl
 //
 // 只写特征，不复制音频，不保留转发用的路径。

@@ -37,9 +37,9 @@
 
 ## 数据
 
-- 标准：`./data\standards.json`（人 + 群 + 通用，纯文本，可手改）
-- 基线条数：来自 `./data\baselines.json`
-- 初稿来源：`./data\observations.jsonl`（只有数字，没有音频、没有原文）
+- 标准：`.\data\standards.json`（人 + 群 + 通用，纯文本，可手改）
+- 基线条数：来自 `.\data\baselines.json`
+- 初稿来源：`.\data\observations.jsonl`（只有数字，没有音频、没有原文）
 
 ## 宿主半边
 
@@ -73,8 +73,8 @@
 不用手猜，也不要拿没有标签的自己的语音去"驯"（那等于自己给自己打分）。做法：
 
 ```
-node ./tune-standards.mjs --target 0.7            # 只看，不写
-node ./tune-standards.mjs --angry 0.45 --sad 0.24 --apply
+node .\tune-standards.mjs --target 0.7            # 只看，不写
+node .\tune-standards.mjs --angry 0.45 --sad 0.24 --apply
 ```
 
 它用**线上模型**在 CASIA 的 1,000 条上算每个片段最近/次近距离比，再扫门槛，

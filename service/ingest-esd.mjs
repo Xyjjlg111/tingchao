@@ -1,6 +1,6 @@
 // ESD 语料入库（并行分片版）
 // 用法：
-//   node ingest-esd.mjs --root "<corpus>/ESD\Emotion Speech Dataset" --out data/esd-samples.jsonl
+//   node ingest-esd.mjs --root "<corpus>\ESD\Emotion Speech Dataset" --out data/esd-samples.jsonl
 //   可选：--per 150（每个说话人每个情绪最多取多少条） --shard 0/8 --out 分片文件
 //
 // 目录：<speaker>/<Emotion>/*.wav  +  <speaker>/<speaker>.txt（转写 + 中文情绪名）

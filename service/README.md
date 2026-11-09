@@ -119,7 +119,7 @@ node test-integration.mjs   # 假网关 + 真 whisper 的端到端
 
 ### 省电联动
 
-省电模式进入时，`eco-mode.ps1` 会关掉 3098（语音系统整体停），退出（开盖/插电）时自动拉起；`boot-check` 与 `watch-her` 在省电期间不会把它救活。判定依据是 `<repo>/logs\eco-state.json` 的 `eco` 字段。
+省电模式进入时，`eco-mode.ps1` 会关掉 3098（语音系统整体停），退出（开盖/插电）时自动拉起；`boot-check` 与 `watch-her` 在省电期间不会把它救活。判定依据是 `<tools>\logs\eco-state.json` 的 `eco` 字段。
 
 ## 0.4.0 —— 中文引擎换成 Paraformer（2026-11-08）
 
@@ -166,7 +166,7 @@ node test-integration.mjs   # 假网关 + 真 whisper 的端到端
 ## 0.6.0 —— 非语言发声（笑 / 叹气 / 哭腔）
 
 来源：[EmoGator](https://github.com/fredbuhl/EmoGator)（CC BY 4.0），32,130 条发声、357 个说话人。
-本地副本：`<corpus>/EmoGator\extract\EmoGator-main\data\mp3`（已全量下载）。
+本地副本：`<drive>/语音库\EmoGator\extract\EmoGator-main\data\mp3`（已全量下载）。
 
 做法：
 1. `burst-ingest.mjs` 解码 mp3 → 16k 单声道 → 同一套韵律特征 → `data/burst-samples.jsonl`
@@ -187,7 +187,7 @@ node test-integration.mjs   # 假网关 + 真 whisper 的端到端
 分工：说话（有字）走 CASIA 质心模型；纯发声走这里的 burst 模型；两者都不确定时保持 `[语音]`。
 ## 0.7.0 —— EmotionTalk 落地与"跨语料库"实情（2026-11-08）
 
-来源：[EmotionTalk](https://modelscope.cn/datasets/BAAI/Emotiontalk)（南开 NKU-HLT，CC BY-NC-SA 4.0）。19,250 条双人对话语音 / 19 位说话人 / 44.1kHz 双声道；本地 `<corpus>/EmotionTalk`（Audio.tar 14,811,722,752B，解压后 13.8GB）。
+来源：[EmotionTalk](https://modelscope.cn/datasets/BAAI/Emotiontalk)（南开 NKU-HLT，CC BY-NC-SA 4.0）。19,250 条双人对话语音 / 19 位说话人 / 44.1kHz 双声道；本地 `<corpus>\EmotionTalk`（Audio.tar 14,811,722,752B，解压后 13.8GB）。
 
 做过的四组实验（全部按"留一说话人"）：
 
@@ -275,7 +275,7 @@ node test-integration.mjs   # 假网关 + 真 whisper 的端到端
 换 large 是「同样的接口、多 50ms、少 5 个字错」。SenseVoice 在 41 条样本上和 small 打平（10.6% vs 10.4%），但它自带标点与数字归一化（一千万写成阿拉伯数字），对 CER 不利、对我们的用途也没必要，所以没换。
 
 **验证**：5 秒真实语音转写 174ms（含特征），文本「今天加班到九点别等我了我有点累」正确。
-**回滚**：启动时设 EARS_PARA_DIR=./models\sherpa-onnx-paraformer-zh-small-2024-03-09。
+**回滚**：启动时设 EARS_PARA_DIR=.\models\sherpa-onnx-paraformer-zh-small-2024-03-09。
 
 
 ## 0.8.4（2026-11-08）精简输出 + 私聊不重复标号
@@ -291,7 +291,7 @@ node test-integration.mjs   # 假网关 + 真 whisper 的端到端
 
 ## 0.9.0 —— 并入 ESD（英文/中文，20 人，35,000 条）
 
-- 数据：ESD \<corpus>/ESD\，20 个说话人（10 中文 + 10 英文）× 5 情绪 × 350 句 = 35,000 条，
+- 数据：ESD \<corpus>\ESD\，20 个说话人（10 中文 + 10 英文）× 5 情绪 × 350 句 = 35,000 条，
   每条带官方转写 \<speaker>.txt\（因此语速是**真实字/秒**，不再用代理值）。
 - 入库脚本 \ingest-esd.mjs\：跳过 \__MACOSX\、\._*\；必须先 \parseWav\ → \	o16kMono\ 再
   \nalyzeProsody\（直接喂 WAV Buffer 会得到 “almost no speech energy”）。

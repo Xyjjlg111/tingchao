@@ -74,7 +74,7 @@ node test-integration.mjs   # 假网关 + 真 whisper 的端到端
 
 ## 与桥接的分工
 
-`<drive>/qq-bridge\src\voice-ears.js` 负责：取语音（`get_record`）→ 调本服务 → 拼成
+`<drive>\qq-bridge\src\voice-ears.js` 负责：取语音（`get_record`）→ 调本服务 → 拼成
 `[语音 5秒｜示例用户｜语气:疲惫 0.62（语速慢+停顿多）] 正文`。
 
 - 失败不再静默变成 `[语音]`，而是 `[语音 · 未能转写]`
@@ -119,7 +119,7 @@ node test-integration.mjs   # 假网关 + 真 whisper 的端到端
 
 ### 省电联动
 
-省电模式进入时，`eco-mode.ps1` 会关掉 3098（语音系统整体停），退出（开盖/插电）时自动拉起；`boot-check` 与 `watch-her` 在省电期间不会把它救活。判定依据是 `<tools>\logs\eco-state.json` 的 `eco` 字段。
+省电模式进入时，`eco-mode.ps1` 会关掉 3098（语音系统整体停），退出（开盖/插电）时自动拉起；`boot-check` 与 `watch-her` 在省电期间不会把它救活。判定依据是 `<drive>\dsh-autostart\logs\eco-state.json` 的 `eco` 字段。
 
 ## 0.4.0 —— 中文引擎换成 Paraformer（2026-11-08）
 
@@ -166,7 +166,7 @@ node test-integration.mjs   # 假网关 + 真 whisper 的端到端
 ## 0.6.0 —— 非语言发声（笑 / 叹气 / 哭腔）
 
 来源：[EmoGator](https://github.com/fredbuhl/EmoGator)（CC BY 4.0），32,130 条发声、357 个说话人。
-本地副本：`<drive>/语音库\EmoGator\extract\EmoGator-main\data\mp3`（已全量下载）。
+本地副本：`<drive>\语音库\EmoGator\extract\EmoGator-main\data\mp3`（已全量下载）。
 
 做法：
 1. `burst-ingest.mjs` 解码 mp3 → 16k 单声道 → 同一套韵律特征 → `data/burst-samples.jsonl`
@@ -187,7 +187,7 @@ node test-integration.mjs   # 假网关 + 真 whisper 的端到端
 分工：说话（有字）走 CASIA 质心模型；纯发声走这里的 burst 模型；两者都不确定时保持 `[语音]`。
 ## 0.7.0 —— EmotionTalk 落地与"跨语料库"实情（2026-11-08）
 
-来源：[EmotionTalk](https://modelscope.cn/datasets/BAAI/Emotiontalk)（南开 NKU-HLT，CC BY-NC-SA 4.0）。19,250 条双人对话语音 / 19 位说话人 / 44.1kHz 双声道；本地 `<corpus>\EmotionTalk`（Audio.tar 14,811,722,752B，解压后 13.8GB）。
+来源：[EmotionTalk](https://modelscope.cn/datasets/BAAI/Emotiontalk)（南开 NKU-HLT，CC BY-NC-SA 4.0）。19,250 条双人对话语音 / 19 位说话人 / 44.1kHz 双声道；本地 `<drive>\语音\语音库\EmotionTalk`（Audio.tar 14,811,722,752B，解压后 13.8GB）。
 
 做过的四组实验（全部按"留一说话人"）：
 
@@ -275,7 +275,7 @@ node test-integration.mjs   # 假网关 + 真 whisper 的端到端
 换 large 是「同样的接口、多 50ms、少 5 个字错」。SenseVoice 在 41 条样本上和 small 打平（10.6% vs 10.4%），但它自带标点与数字归一化（一千万写成阿拉伯数字），对 CER 不利、对我们的用途也没必要，所以没换。
 
 **验证**：5 秒真实语音转写 174ms（含特征），文本「今天加班到九点别等我了我有点累」正确。
-**回滚**：启动时设 EARS_PARA_DIR=.\models\sherpa-onnx-paraformer-zh-small-2024-03-09。
+**回滚**：启动时设 EARS_PARA_DIR=<drive>\dsh-ears-svc\models\sherpa-onnx-paraformer-zh-small-2024-03-09。
 
 
 ## 0.8.4（2026-11-08）精简输出 + 私聊不重复标号
@@ -291,7 +291,7 @@ node test-integration.mjs   # 假网关 + 真 whisper 的端到端
 
 ## 0.9.0 —— 并入 ESD（英文/中文，20 人，35,000 条）
 
-- 数据：ESD \<corpus>\ESD\，20 个说话人（10 中文 + 10 英文）× 5 情绪 × 350 句 = 35,000 条，
+- 数据：ESD \<drive>\语音\语音库\ESD\，20 个说话人（10 中文 + 10 英文）× 5 情绪 × 350 句 = 35,000 条，
   每条带官方转写 \<speaker>.txt\（因此语速是**真实字/秒**，不再用代理值）。
 - 入库脚本 \ingest-esd.mjs\：跳过 \__MACOSX\、\._*\；必须先 \parseWav\ → \	o16kMono\ 再
   \nalyzeProsody\（直接喂 WAV Buffer 会得到 “almost no speech energy”）。
@@ -325,3 +325,43 @@ node test-integration.mjs   # 假网关 + 真 whisper 的端到端
    的旧基线行（少于 3 条就整段重建）。
 
 回滚到旧模型：\copy data\model.casia3.bak-20261108.json data\model.json\ 后重启 3098。
+
+## 0.9.2 —— 语音留存 + 基线去污染（2026-11-10）
+
+### 留下的语音去哪了
+桥接侧新增 `socialV2.voice.ears.saveAudio`：每条语音转写完会把 **wav 原文件**存到
+`saveAudioDir/<YYYY-MM-DD>/HHMMSS_<QQ>_<label>.wav`，并在 `index.jsonl` 追加一行元数据
+（时间 / 说话人 / 群 / 时长 / 判定 / 置信度 / 转写）。配额默认 300 条 / 500 MB，超了删最旧（保底 20 条）。
+这样以后换模型、标新类别都能重算——之前只存特征，音频一走就没了。
+
+### 为什么要有 `baseline-exclude.json`
+基线是"这个人平时怎么说话"，用最近 60 条偏中性语音的中位数。问题是：
+**如果有一整晚他都在累，那一晚会被学成"平时"**，以后更累时反而不偏离 → 永远判平常。
+所以加了排除区间：
+
+```json
+{ "ranges": [{ "from": "2026-11-09T11:50:00.000Z", "to": "2026-11-09T14:30:00.000Z" }],
+  "speakers": {} }
+```
+
+区间内（UTC）的语音**照样判定，但不进基线**。`speakers` 可以按 QQ 单独设，比全局更细。
+
+### `POST /baseline/set`：手动写死基线
+剔除污染时段后，用剩下的样本重算一份中位数写进去：
+
+```bash
+curl -X POST "http://127.0.0.1:3098/baseline/set?speaker=<QQ>" \
+  -H "content-type: application/json" \
+  -d '{"baseline":{"rate":4.01,"pitchIQR":3.02,"pitchHz":137,"pauseRatio":0.303,"energyCV":0.21,"energyDb":-21.5,"zcr":1198,"hnr":2.3,"pitchSlope":-0.68,"tailTrend":-5.59,"peakRate":5,"n":73}}'
+```
+
+写过之后 `baselineOf()` 优先用它，不再被新样本覆盖（想恢复自动学习：`POST /baseline/reset`）。
+
+### 昨晚那 30 条疲惫语音：能做什么、不能做什么
+- **能**：当作"疲惫"类的第一批带标签样本（`data/samples-tired-20261109.jsonl`，只有特征，无音频——当时还没开留存）。
+- **不能**：直接加"疲惫"分类。实测 30 条疲惫 vs 100 条平日，最佳线性打分 **AUC 0.712**，
+  召回 0.67 时精度只有 0.40 —— 也就是每报 5 次"累"会错 3 次。宁可不说。
+- 有用的一条结论：他累的时候是 **语速 −8%、嗓音（HNR）+0.39、音色亮度 +31%**，
+  方向是"慢一点、嗓子松、声音发紧"，和"低落"（句尾下沉、音高变平）不是一回事。
+- 基线去污染后的直接收益：同样 30 条疲惫语音，旧基线判出 **1 条愤怒**（误报），
+  新基线 **0 条愤怒、29 条平常**；平日 100 条里 23 条 `too_far` 只给读数不给结论。

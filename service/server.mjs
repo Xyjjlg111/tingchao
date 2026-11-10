@@ -42,6 +42,10 @@ const MODEL = process.env.EARS_MODEL === 'small' ? MODEL_SMALL
   : process.env.EARS_MODEL || MODEL_BASE
 const DATA_DIR = join(ROOT, 'data')
 const BASELINE_FILE = join(DATA_DIR, 'baselines.json')
+// 2026-11-10：有些时段的语音不能进基线（比如整晚都在累的那一批）。
+// 一旦被学成「他平时就这样」，以后更累时反而不会偏离——这是最隐蔽的一种污染。
+// 结构：{ "ranges": [{"from":"ISO","to":"ISO"}], "speakers": { "qq": [{"from":"ISO","to":"ISO"}] } }
+const EXCLUDE_FILE = join(DATA_DIR, 'baseline-exclude.json')
 // 听潮 · 判断标准：通用 + 每人专属（面板在 DSH 设置里改）
 const STANDARDS_FILE = join(DATA_DIR, 'standards.json')
 const standardsStore = createStandards(STANDARDS_FILE)
@@ -105,8 +109,16 @@ let prototypeSource = existsSync(PROTOTYPE_FILE) ? 'file' : 'prior'
 // 质心模型：有 data/model.json 就优先用它判定（原型只留作解释）。
 // CASIA 实测：同一套特征下 区间原型 LOO 27.8% → 质心 65.5% → 三特征(语速/音量/音色) 71.8%。
 const MODEL_FILE = join(DATA_DIR, 'model.json')
-const centroidModel = loadModel(loadJson(MODEL_FILE, null))
-const modelSource = centroidModel ? 'file' : 'none'
+let centroidModel = loadModel(loadJson(MODEL_FILE, null))
+let modelSource = centroidModel ? 'file' : 'none'
+
+// 热重载：自己训练完不用重启服务（train-my-model.mjs 调 POST /reload）。
+function reloadModel() {
+  const next = loadModel(loadJson(MODEL_FILE, null))
+  centroidModel = next
+  modelSource = next ? 'file' : 'none'
+  return { source: modelSource, labels: next?.labels ?? [], keys: next?.keys ?? [], loo: next?.loo?.acc ?? null }
+}
 
 // ---- 非语言发声（EmoGator）模型：笑/叹气/哭腔 ----------------------------
 // 只在「转写为空」时使用：没有说话的字，就没有句子级情绪可言，
@@ -212,11 +224,28 @@ function doBurst(buf) {
 
 function baselineOf(speaker) {
   const s = speaker && store.speakers[speaker]
+  // 固定基线优先（手动校准/剔除污染后写入），否则用最近 60 条的中位数。
+  if (s && s.fixed && Number.isFinite(s.fixed.rate)) return s.fixed
   return s && s.rows && s.rows.length >= 3 ? buildBaseline(s.rows) : null
 }
 
-function learnBaseline(speaker, features) {
-  if (!speaker) return
+// 这条语音的时间是否落在「不许进基线」的时段里
+function isExcludedForBaseline(speaker, at) {
+  const cfg = loadJson(EXCLUDE_FILE, { ranges: [], speakers: {} })
+  const t = Date.parse(at || new Date().toISOString())
+  if (!Number.isFinite(t)) return false
+  const hit = (r) => {
+    const a = Date.parse(r?.from || '')
+    const b = Date.parse(r?.to || '')
+    return Number.isFinite(a) && Number.isFinite(b) && t >= a && t <= b
+  }
+  const list = [...(cfg.ranges || []), ...((cfg.speakers && cfg.speakers[speaker]) || [])]
+  return list.some(hit)
+}
+
+function learnBaseline(speaker, features, at) {
+  if (!speaker) return false
+  if (isExcludedForBaseline(speaker, at)) return false
   const s = store.speakers[speaker] || { rows: [], updatedAt: null }
   // 必须把模型用到的每一项都存下来：旧版只存 7 项，模型换成含 hnr 的四键后，
   // 基线里 hnr 恒为 0 → 相对值凭空多出 3~4 个标准差 → 全部 too_far（2026-11-08 实测）。
@@ -237,6 +266,7 @@ function learnBaseline(speaker, features) {
   s.updatedAt = new Date().toISOString()
   store.speakers[speaker] = s
   saveJson(BASELINE_FILE, store)
+  return true
 }
 
 let paraRec = null
@@ -405,15 +435,16 @@ function doAffect(buf, text = '', opts = {}) {
   let learned = false
   if (speaker && r.features.pitchFrames >= 6 && r.features.speechSeconds >= 1.0) {
     const rows = store.speakers[speaker]?.rows?.length || 0
+    const at = new Date().toISOString()
     // 只让"偏平常"的语音进入基线：不然一条很累的语音会被学成他平时的样子。
     const neutralish = (useCentroid && cen.label === 'neutral') || (!useCentroid && !useProto)
     if (!baseline && rows < 3) {
-      learnBaseline(speaker, r.features)
-      learned = true
-      cls.rule = 'bootstrap'
+      if (learnBaseline(speaker, r.features, at)) {
+        learned = true
+        cls.rule = 'bootstrap'
+      }
     } else if (neutralish && r.features.speechSeconds >= 1.2) {
-      learnBaseline(speaker, r.features)
-      learned = true
+      learned = learnBaseline(speaker, r.features, at)
     }
   }
 
@@ -516,6 +547,10 @@ const server = http.createServer(async (req, res) => {
   const speaker = url.searchParams.get('speaker') || ''
   const groupParam = url.searchParams.get('group') || ''
   try {
+    if (req.method === 'POST' && url.pathname === '/reload') {
+      const info = reloadModel()
+      return json(res, 200, { ok: true, ...info })
+    }
     if (req.method === 'GET' && url.pathname === '/health') {
       return json(res, 200, {
         ok: true,
@@ -550,7 +585,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/eco') {
       let eco = false
       try {
-        const ecoFile = process.env.EARS_ECO_FILE || 'F:/dsh-autostart/logs/eco-state.json'
+        const ecoFile = process.env.EARS_ECO_FILE || '<drive>/dsh-autostart/logs/eco-state.json'
         const st = JSON.parse(readFileSync(ecoFile, 'utf8'))
         eco = Boolean(st && st.eco)
       } catch {}
@@ -600,6 +635,24 @@ const server = http.createServer(async (req, res) => {
       delete store.speakers[speaker]
       saveJson(BASELINE_FILE, store)
       return json(res, 200, { ok: true, removed: speaker })
+    }
+    // 手动写死一份基线：用于「剔除被污染的时段后重算」，或跨设备迁移。
+    // body: { baseline: { rate, pitchIQR, pitchHz, pauseRatio, energyCV, energyDb, zcr, hnr, pitchSlope, tailTrend, peakRate, n } }
+    if (req.method === 'POST' && url.pathname === '/baseline/set') {
+      if (!speaker) return json(res, 400, { ok: false, error: 'speaker required' })
+      const body = await readJsonSafe(req)
+      if (!body.ok) return json(res, 400, { ok: false, error: body.error })
+      const b = body.value?.baseline
+      if (!b || !Number.isFinite(Number(b.rate)) || !Number.isFinite(Number(b.pitchIQR))) {
+        return json(res, 400, { ok: false, error: 'baseline.rate / baseline.pitchIQR required (numbers)' })
+      }
+      const s = store.speakers[speaker] || { rows: [], updatedAt: null }
+      s.fixed = { ...b, n: Number(b.n) || s.rows?.length || 0, updatedAt: new Date().toISOString() }
+      s.updatedAt = new Date().toISOString()
+      store.speakers[speaker] = s
+      saveJson(BASELINE_FILE, store)
+      log(`baseline fixed: ${speaker} rate=${b.rate} pitchIQR=${b.pitchIQR} zcr=${b.zcr} hnr=${b.hnr}`)
+      return json(res, 200, { ok: true, speaker, baseline: s.fixed })
     }
     if (req.method === 'POST' && (url.pathname === '/asr' || url.pathname === '/analyze' || url.pathname === '/affect')) {
       const buf = await readBody(req)
